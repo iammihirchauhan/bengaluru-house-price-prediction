@@ -1,0 +1,23 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*.log
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Django
+db.sqlite3
+staticfiles/
+
+# Environment variables and secrets
+.env
+
+# VS Code
+.vscode/

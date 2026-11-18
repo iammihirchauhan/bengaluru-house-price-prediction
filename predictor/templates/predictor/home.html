@@ -1,0 +1,333 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bengaluru HomeValue | Price Prediction</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+  </head>
+
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="logo">Home<span>Value.</span></div>
+      <a href="/" class="nav-link">Home</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-content">
+        <p class="tagline">SMART REAL ESTATE INSIGHTS</p>
+
+        <h1>
+          Find the estimated value of your
+          <span>dream home.</span>
+        </h1>
+
+        <p class="hero-description">
+          Get an estimated Bengaluru property price using machine learning.
+          Enter your property details and discover its estimated market value.
+        </p>
+      </div>
+    </section>
+
+    <!-- Main Section -->
+    <main class="main-container">
+      <!-- Property Details Form -->
+      <div class="form-card">
+        <div class="form-heading">
+          <h2>Property Details</h2>
+          <p>Enter the details of the property below.</p>
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+
+          <div class="form-grid">
+            <!-- Area Type -->
+            <div class="form-group">
+              <label>Area Type</label>
+
+              <select name="area_type" required>
+                <option value="">Select area type</option>
+                <option value="Super built-up  Area">
+                  Super built-up Area
+                </option>
+                <option value="Built-up  Area">Built-up Area</option>
+                <option value="Plot  Area">Plot Area</option>
+                <option value="Carpet  Area">Carpet Area</option>
+              </select>
+            </div>
+
+            <!-- Location -->
+            <div class="form-group">
+              <label>Location</label>
+
+              <select name="location" required>
+                <option value="">Select location</option>
+
+                {% for location in locations %}
+                <option value="{{ location }}">{{ location }}</option>
+                {% endfor %}
+
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <!-- Total Area -->
+            <div class="form-group">
+              <label>Total Area (sq. ft.)</label>
+
+              <input
+                type="number"
+                name="total_sqft"
+                placeholder="e.g. 1200"
+                min="1"
+                step="any"
+                required
+              />
+            </div>
+
+            <!-- BHK -->
+            <div class="form-group">
+              <label>BHK</label>
+
+              <select name="bhk" required>
+                <option value="">Select BHK</option>
+
+                {% for i in "123456789" %}
+                <option value="{{ i }}">{{ i }} BHK</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Bathrooms -->
+            <div class="form-group">
+              <label>Bathrooms</label>
+
+              <input
+                type="number"
+                name="bath"
+                placeholder="e.g. 2"
+                min="1"
+                required
+              />
+            </div>
+
+            <!-- Balconies -->
+            <div class="form-group">
+              <label>Balconies</label>
+
+              <input
+                type="number"
+                name="balcony"
+                placeholder="e.g. 1"
+                min="0"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="predict-btn">
+            Predict Property Price
+            <span>→</span>
+          </button>
+
+          <!-- Error Message -->
+          {% if error %}
+          <div class="error-message">{{ error }}</div>
+          {% endif %}
+        </form>
+
+        <!-- Prediction Result -->
+        {% if prediction is not None %}
+        <div class="result-card">
+          <p class="result-label">ESTIMATED PROPERTY VALUE</p>
+
+          <h2>₹{{ prediction }} <span>Lakhs</span></h2>
+
+          <p class="result-note">
+            This is an ML-based estimate, not a guaranteed market price.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Prediction Dashboard -->
+      <section class="dashboard-section">
+        <div class="form-heading">
+          <h2>Prediction Dashboard</h2>
+          <p>A quick overview of your prediction activity.</p>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Total Predictions -->
+          <div class="dashboard-card">
+            <p>Total Predictions</p>
+            <h2>{{ total_predictions }}</h2>
+          </div>
+
+          <!-- Average Price -->
+          <div class="dashboard-card">
+            <p>Average Price</p>
+
+            <h2>
+              {% if average_price != None %} ₹{{ average_price|floatformat:2 }}
+              L {% else %}  {% endif %}
+            </h2>
+          </div>
+
+          <!-- Highest Price -->
+          <div class="dashboard-card">
+            <p>Highest Price</p>
+
+            <h2>
+              {% if highest_price != None %} ₹{{ highest_price|floatformat:2 }}
+              L {% else %} {% endif %}
+            </h2>
+          </div>
+
+          <!-- Latest Location -->
+          <div class="dashboard-card">
+            <p>Latest Location</p>
+
+            <h2>
+              {% if latest_prediction %} {{ latest_prediction.location }} 
+              {% else %} {% endif %}
+            </h2>
+          </div>
+        </div>
+      </section>
+
+
+    <!-- Recent Prediction History -->
+    {% if history %}
+    <section class="history-section">
+
+        <div class="form-heading">
+            <h2>Recent Predictions</h2>
+            <p>Your last 10 house price predictions.</p>
+        </div>
+
+        <div class="history-table-wrapper">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Location</th>
+                        <th>Area</th>
+                        <th>BHK</th>
+                        <th>Predicted Price</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in history %}
+                    <tr>
+                        <td>{{ item.location }}</td>
+                        <td>{{ item.total_sqft|floatformat:0 }} sqft</td>
+                        <td>{{ item.bhk }} BHK</td>
+                        <td>₹{{ item.predicted_price|floatformat:2 }} L</td>
+                        <td>{{ item.created_at|date:"d M Y, h:i A" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+    {% endif %}
+
+    <!-- Prediction Price Chart -->
+    <section class="chart-section">
+
+        <div class="form-heading">
+            <h2>House Price Comparison</h2>
+            <p>Compare your latest 10 predicted property prices.</p>
+        </div>
+
+        {% if history %}
+        <div class="chart-container">
+            <canvas id="priceChart"></canvas>
+        </div>
+        {% else %}
+        <p>No prediction data available yet.</p>
+        {% endif %}
+
+    </section>
+
+    {{ chart_labels|json_script:"chart-labels" }}
+    {{ chart_prices|json_script:"chart-prices" }}
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <p>© 2026 HomeValue. Bengaluru House Price Prediction Project.</p>
+      <p>Powered by Machine Learning</p>
+    </footer>
+
+
+
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const chartElement = document.getElementById("priceChart");
+
+    if (chartElement && typeof Chart !== "undefined") {
+
+        const labels = JSON.parse(
+            document.getElementById("chart-labels").textContent
+        );
+
+        const prices = JSON.parse(
+            document.getElementById("chart-prices").textContent
+        );
+
+        new Chart(chartElement, {
+            type: "bar",
+
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Predicted Price (Lakhs)",
+                    data: prices,
+                    backgroundColor: "#3977ed",
+                    borderRadius: 6
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: "Price (Lakhs)"
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>
+
+    
+  </body>
+</html>
